@@ -1,0 +1,26 @@
+#!/usr/bin/env expect 
+spawn ./a.out
+set timeout 1
+
+send "((a((bc)(de)))f)\n"
+expect "((a((bc)(de)))f)\r\n"
+
+send "(((zbcd)(((e)fg))))\n"
+expect "((zbcd)((e)fg))\r\n"
+
+send "ab((c))\n"
+expect "ab(c)\r\n"
+
+send "()\n"
+expect {
+    "NULL\r\n" { send_user "SUCCESS\n"}
+    -re ".*\r\n" { send_user "FAIL\n" }
+}
+
+send "((fgh()()()))\n"
+expect "(fgh)\r\n"
+
+send "()(abc())\n"
+expect "(abc)\r\n"
+
+close
