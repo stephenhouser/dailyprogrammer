@@ -120,6 +120,10 @@ void node_add_child(Node *node, Node *child) {
 	child->parent = node;
 }
 
+void node_remove_child(Node *node, Node *child) {
+
+}
+
 int node_list_empty(Node *node) {
 	if (node->type == LIST_NODE) {
 		return node->children == 0;
@@ -210,11 +214,13 @@ void print_tree(Node *root) {
 	for (int c = 0; c < root->children_count; c++) {
 		print_node(root->children[c]);
 	}
+
 	printf("\n");
 }
 
 void simplify_node(Node *node) {
 	if (node->type == LIST_NODE) {
+		
 		while (node->children_count == 1 && node->children[0]->type == LIST_NODE) {
 			// attach grandchildren to me, rather rudely I might add
 			Node *only_child = node->children[0];
