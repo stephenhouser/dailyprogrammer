@@ -1,0 +1,30 @@
+#!/usr/bin/env expect
+set target [lindex $argv 0]
+set timeout 1
+expect_after {
+    timeout {
+        send_user "FAILED -- $expect_out(0,string)\n"
+    }
+}
+
+spawn ./$target
+
+send   "((a((bc)(de)))f)\r"
+expect "((a((bc)(de)))f)\r\n"
+
+send "(((zbcd)(((e)fg))))\r"
+expect "((zbcd)((e)fg))\r\n"
+
+send "ab((c))\r"
+expect "ab(c)\r\n" 
+
+send "()\r"
+expect "NULL\r\n"
+
+send "((fgh()()()))\r"
+expect "(fgh)\r\n"
+
+send "()(abc())\r"
+expect "(abc)\r\n"
+
+close

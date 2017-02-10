@@ -2,9 +2,9 @@
 #
 # 2017-02-10/Stephen Houser
 #
-TARGET = a_paren
+TARGET = parens
 HEADERS = 
-SOURCES = a_paren.c
+SOURCES = $(TARGET).c
 
 # Include my C library
 LIB_DIR = ../../lib
@@ -17,7 +17,7 @@ LFLAGS = -L$(LIB_DIR) $(LIBS)
 
 EXPECT = expect
 
-.PHONY: default all clean
+.PHONY: default all clean distclean
 
 default: $(TARGET)
 all: default
@@ -40,9 +40,11 @@ $(TARGET): $(OBJECTS)
 	$(CC) $(LFLAGS) $^ $(LIBS) -o $@
 
 test: $(TARGET)
-	$(EXPECT) $(TARGET).test 
+	$(EXPECT) $(TARGET).exp $(TARGET)
 
 clean:
 	-rm -f *.o
-	-rm -f $(TARGET)	
 	-rm -f core a.out
+
+distclean: clean
+	-rm -f $(TARGET)

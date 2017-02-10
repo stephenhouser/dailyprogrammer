@@ -13,7 +13,7 @@ LFLAGS =
 AR = ar
 AFLAGS = -rcs
 
-.PHONY: default all clean
+.PHONY: default all clean distclean
 
 default: $(TARGET)
 all: default
@@ -37,5 +37,8 @@ $(TARGET): $(OBJECTS)
 
 clean:
 	-rm -f *.o
-	-rm -f $(TARGET)	
+	#-rm -f $(TARGET)	
 	-rm -f core a.out
+
+distclean: clean
+	-rm -f $(TARGET)	
