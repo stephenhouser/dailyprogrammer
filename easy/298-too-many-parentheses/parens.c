@@ -3,6 +3,8 @@
 #include <string.h>
 #include <ctype.h>
 
+#include <strings.h>
+
 /* start points to opening '(' */
 char *find_match(char *start) {
     char *p;
@@ -20,34 +22,6 @@ char *find_match(char *start) {
     }
 
     return p; /* not found */
-}
-
-/* Chomp off trailing control characters (e.g. newline) from string. */
-int chomp(char *string) {
-    int count = 0;
-    char *p = string + strlen(string) - 1;
-    while (p > string && iscntrl(*p)) {
-        *p = '\0';
-        p--;
-        count++;
-    }
-
-    return count;
-}
-
-/* Strip spaces from string (in-place). */
-int strip(char *string) {
-    char *s = string;
-    char *d = string;
-    int count = 0;
-    do {
-        while(isspace(*s)) {
-            s++;
-            count++;
-        }
-    } while((*d++ = *s++) != '\0');
-
-    return count;
 }
 
 // works
@@ -154,15 +128,17 @@ int main(int argc, char *argv[]) {
     ssize_t read;
 
     while ((read = getline(&line, &len, stdin)) != -1) {
-        int r = chomp(line);
+        chomp(line);
         char buffer[strlen(line) + 1];
 
-        printf("<:%s\n", line);
+        //printf("<:%s\n", line);
 
         strcpy(buffer, line);
         remove_parens1(buffer);
-        printf("1:%s\n", buffer);
+        printf("%s\n", buffer);
+        //printf("1:%s\n", buffer);
 
+        /*
         strcpy(buffer, line);
         remove_parens2(buffer);
         printf("2:%s\n", buffer);
@@ -172,8 +148,8 @@ int main(int argc, char *argv[]) {
         printf("3:%s\n", buffer);
 
         printf("\n");
+        */
 	}
 
     free(line);
 }
-

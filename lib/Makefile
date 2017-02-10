@@ -3,8 +3,8 @@
 # 2017-02-10/Stephen Houser
 #
 TARGET = libhouser.a
-HEADERS = stack.h queue.h read_line.h
-SOURCES = stack.c queue.c read_line.c
+HEADERS = stack.h queue.h read_line.h strings.h
+SOURCES = stack.c queue.c read_line.c strings.c
 
 CC = gcc
 CFLAGS = -g -Wall
