@@ -1,1 +1,0 @@
-gcc -g -I ../../lib -o parens parens.c ../../lib/read_line.c
