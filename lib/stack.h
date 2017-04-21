@@ -15,4 +15,4 @@ extern int stack_full(Stack *stack);
 extern void stack_push(Stack *stack, void *element);
 extern void *stack_pop(Stack *stack);
 
-void stack_dump(Stack *stack, void (*dump_func)(void *));
+extern void stack_dump(Stack *stack, void (*dump_func)(void *));

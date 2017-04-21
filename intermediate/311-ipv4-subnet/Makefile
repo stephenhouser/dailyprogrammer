@@ -2,16 +2,20 @@
 #
 # 2017-02-10/Stephen Houser
 #
-TARGET = libhouser.a
-HEADERS = stack.h queue.h read_line.h strings.h array.h
-SOURCES = stack.c queue.c read_line.c strings.c array.c
+TARGET = ipv4-subnet
+HEADERS = 
+SOURCES = $(TARGET).c
+
+# Include my C library
+LIB_DIR = ../../lib
+INC_DIR = ../../lib
+LIBS = -lhouser
 
 CC = gcc
-CFLAGS = -g -Wall
-LFLAGS = 
+CFLAGS = -g -Wall -I$(INC_DIR)
+LFLAGS = -L$(LIB_DIR) $(LIBS)
 
-AR = ar
-AFLAGS = -rcs
+EXPECT = expect
 
 .PHONY: default all clean distclean
 
@@ -33,12 +37,14 @@ OBJECTS= $(patsubst %.c, %.o, $(SOURCES))
 .PRECIOUS: $(TARGET) $(OBJECTS)
 
 $(TARGET): $(OBJECTS)
-	$(AR) $(AFLAGS) $@ $^
+	$(CC) $(LFLAGS) $^ $(LIBS) -o $@
+
+test: $(TARGET)
+	./$(TARGET) sample.story
 
 clean:
 	-rm -f *.o
-	#-rm -f $(TARGET)	
 	-rm -f core a.out
 
 distclean: clean
-	-rm -f $(TARGET)	
+	-rm -f $(TARGET)
