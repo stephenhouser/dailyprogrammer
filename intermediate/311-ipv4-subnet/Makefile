@@ -7,13 +7,13 @@ HEADERS =
 SOURCES = $(TARGET).c
 
 # Include my C library
-LIB_DIR = ../../lib
-INC_DIR = ../../lib
-LIBS = -lhouser
+LIB_DIR = /Users/houser/Projects/Collections-C/build/src
+INC_DIR = /Users/houser/Projects/Collections-C/src/include
+LIBS = -lcollectc
 
 CC = gcc
 CFLAGS = -g -Wall -I$(INC_DIR)
-LFLAGS = -L$(LIB_DIR) $(LIBS)
+LFLAGS = -L$(LIB_DIR)
 
 EXPECT = expect
 

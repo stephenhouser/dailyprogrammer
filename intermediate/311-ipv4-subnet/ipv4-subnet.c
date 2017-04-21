@@ -3,15 +3,15 @@
 #include <stdlib.h>
 
 #include <strings.h>
-#include <array.h>
+
+#include <list.h>
 
 #define SUCCESS	0
 
 typedef struct _ipv4_route {
 	uint32_t ip;
-	uint8_t net_bits;
+	uint8_t netmask_bits;
 } ipv4_route;
-
 
 int get_number_of_routes() {
 	char *line = NULL;
@@ -26,106 +26,126 @@ int get_number_of_routes() {
 	return route_count;
 }
 
-uint32_t ipv42l(char *ipv4_string) {
-	uint32_t ipv4;
-	unsigned int b0, b1, b2, b3;
+bool parse_route(char *line, ipv4_route *route) {
+	unsigned int b0, b1, b2, b3, netmask;
 
-	int quads = sscanf(ipv4_string, "%u.%u.%u.%u", &b3, &b2, &b1, &b0);
-	if (quads != 4) {
-		return 0;
+	if (line == NULL || route == NULL) {
+		return false;
 	}
 
-	ipv4 = b3 << 24 | b2 << 16 | b1 << 8 | b0;
-	return ipv4;
+	int scanned = sscanf(line, "%u.%u.%u.%u/%u", &b3, &b2, &b1, &b0, &netmask);
+	if (scanned != 5) {
+		return false;
+	}
+
+	route->ip = b3 << 24 | b2 << 16 | b1 << 8 | b0;
+	route->netmask_bits = netmask;
+	return true;
 }
 
-ipv4_route *parse_route(char *line) {
-	chomp(line);
-	trim(line);
-	char *ip_string = strtok(line, "/");
-	char *net_string = strtok(NULL, "/");
-	if (ip_string == NULL || net_string == NULL) {
-		return NULL;
-	}
-
-	ipv4_route *route = malloc(sizeof(ipv4_route));
-	if (route == NULL) {
-		return NULL;
-	}
-
-	route->ip = ipv42l(ip_string);
-	route->net_bits = atoi(net_string);
-	return route;
+unsigned int netmask_of_bits(size_t bits) {
+	return 0xFFFFFFFF << (32 - bits);
 }
 
-int load_routes(array_t *routes, int route_count) {
+int load_routes(List *routes) {
 	char *line = NULL;
     size_t len = 0;
     ssize_t read = 0;
+	int routes_loaded = 0;
 
-	int route_index = 0;
-
-	// read ipv4 subnet specifications
     while ((read = getline(&line, &len, stdin)) != -1) {
-		ipv4_route *route = parse_route(line);
-		array_set(routes, route_index++, route);
+		ipv4_route *route = malloc(sizeof(ipv4_route));
+		if (parse_route(line, route)) {
+			list_add(routes, route);
+			routes_loaded++;
+		}
 	}
 
 	free(line);
-	return route_index;
+	return routes_loaded;
 }
 
-void print_route(ipv4_route *route) {
+void print_route(void *void_route) {
+	ipv4_route *route = (ipv4_route *)void_route;
 	printf("%u.%u.%u.%u/%u",
 		(route->ip >> 24) & 0x0FF,
 		(route->ip >> 16) & 0x0FF,
 		(route->ip >> 8 ) & 0x0FF,
 		(route->ip      ) & 0x0FF,
-		route->net_bits);
+		route->netmask_bits);
 }
 
-void print_routes(array_t *routes) {
-	for (int i = 0; i < array_size(routes); i++) {
-		ipv4_route *route = array_get(routes, i);
-		print_route(route);
-		printf("\n");
+void print_route_nl(void *void_route) {
+	ipv4_route *route = (ipv4_route *)void_route;
+	print_route(route);
+	printf("\n");
+}
+
+void print_routes(List *routes) {
+	list_foreach(routes, print_route_nl);
+}
+
+// large_network = small netmask
+// small_network = large netmask
+int is_network_prefix(ipv4_route *large_network, ipv4_route *small_network) {
+	unsigned int mask = netmask_of_bits(large_network->netmask_bits);
+	return (large_network->ip & mask) == (small_network->ip & mask);
+}
+
+ipv4_route *route_create() {
+	ipv4_route *route = malloc(sizeof(ipv4_route));
+	return route;
+}
+
+ipv4_route *route_copy(ipv4_route *route) {
+	if (route == NULL) {
+		return NULL;
 	}
-}
 
-int covers_route(ipv4_route *parent, ipv4_route *child) {
-	if (parent->net_bits > child->net_bits) {
-		return 0;
+	ipv4_route *copy = route_create();
+	if (copy != NULL) {
+		memcpy(copy, route, sizeof(ipv4_route));
 	}
 
-	unsigned int mask = 0xFFFFFFFE << parent->net_bits;
-	return (parent->ip & mask) == (child->ip & mask);
+	return copy;
 }
 
-void minimize_routes(array_t *routes) {
-	for (int parent_index = 0; parent_index < array_size(routes); parent_index++) {
-		ipv4_route *parent = array_get(routes, parent_index);
-		if (parent != NULL) {
-			for (int child_index = 0; child_index < array_size(routes); child_index++) {
-				if (parent_index == child_index) {
-					continue;
-				}
+bool add_route(List *routes, ipv4_route *route) {
+	ListIter route_iterator;
+	list_iter_init(&route_iterator, routes);
 
-				ipv4_route *child = array_get(routes, child_index);
-				if (child != NULL) {
-					printf("Cover? ");
-					print_route(parent);
-					printf(" - ");
-					print_route(child);
-					if (covers_route(parent, child)) {
-						printf(" YES!");
-						free(child);
-						array_set(routes, child_index, NULL);
-					}
-					printf("\n");
-				}
+	ipv4_route *compare_route;
+	while (list_iter_next(&route_iterator, (void **)&compare_route) != CC_ITER_END) {
+		if (compare_route->netmask_bits > route->netmask_bits) {
+			if (is_network_prefix(route, compare_route)) {
+				// new route will consume this one
+				list_iter_remove(&route_iterator, NULL);
+			}
+		} else if (compare_route->netmask_bits < route->netmask_bits) {
+			if (is_network_prefix(compare_route, route)) {
+				// ignore route, we already have a larger prefix
+				return false;
 			}
 		}
 	}	
+
+	list_add(routes, route_copy(route));
+	return true;
+}
+
+List *minimal_routes(List *routes) {
+	List *minimal_routes;
+	list_new(&minimal_routes);
+
+	ListIter route_iterator;
+	list_iter_init(&route_iterator, routes);
+
+	ipv4_route *route;
+	while (list_iter_next(&route_iterator, (void **)&route) != CC_ITER_END) {
+		add_route(minimal_routes, route);
+	}
+
+	return minimal_routes;
 }
 
 int main(int argc, char **argv) {
@@ -135,21 +155,16 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	array_t routes;
-	array_init(&routes, route_count);
-
-	if (load_routes(&routes, route_count)) {
-		minimize_routes(&routes);
-		print_routes(&routes);
+	List *routes;
+	list_new(&routes);
+	if (load_routes(routes) == route_count) {
+		List *min_routes = minimal_routes(routes);
+		if (min_routes != NULL) {
+			print_routes(min_routes);
+			list_destroy_free(min_routes);
+		}
 	}
 
-	// free routes
-	for (int i = 0; i < array_size(&routes); i++) {
-		ipv4_route *route = array_get(&routes, i);
-		array_set(&routes, i, NULL);
-		free(route);
-	}
-	array_destroy(&routes);
-
+	list_destroy_free(routes);
 	return SUCCESS;
 }
