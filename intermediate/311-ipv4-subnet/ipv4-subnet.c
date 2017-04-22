@@ -10,13 +10,6 @@ typedef struct _ipv4route {
 	uint8_t netmask_bits;
 } IPv4Route;
 
-// large_network = small netmask
-// small_network = large netmask
-int is_network_prefix(IPv4Route *large_network, IPv4Route *small_network) {
-	unsigned int netmask = 0xFFFFFFFF << (32 - large_network->netmask_bits);
-	return (large_network->ip & netmask) == (small_network->ip & netmask);
-}
-
 IPv4Route *route_create() {
 	IPv4Route *route = malloc(sizeof(IPv4Route));
 	return route;
@@ -69,6 +62,17 @@ void route_print_nl(void *void_route) {
 	printf("\n");
 }
 
+// large_network = small netmask
+// small_network = large netmask
+int route_covers_route(IPv4Route *subject_route, IPv4Route *object_route) {
+	unsigned int netmask = 0xFFFFFFFF << (32 - subject_route->netmask_bits);
+	return (subject_route->ip & netmask) == (object_route->ip & netmask);
+}
+
+/*
+ * Add new route to list of routes if it is uniqie or covers other routes
+ * already in the list. Remove any covered routes already in the list.
+ */
 bool list_add_route(List *routes, IPv4Route *route) {
 	assert(routes != NULL);
 	assert(route != NULL);
@@ -78,14 +82,12 @@ bool list_add_route(List *routes, IPv4Route *route) {
 
 	list_iter_init(&route_iterator, routes);
 	while (list_iter_next(&route_iterator, (void **)&existing_route) != CC_ITER_END) {
-		if (existing_route->netmask_bits < route->netmask_bits) {
-			if (is_network_prefix(existing_route, route)) {
-				// ignore the new route, we already have a larger prefix
-				return false;
-			}
-		} else if (is_network_prefix(route, existing_route)) {
-			// new route will consume existing one, remove existing route
-			list_iter_remove(&route_iterator, NULL);
+		if (route_covers_route(route, existing_route)) {
+			/* Remove covered route(s). */
+			list_iter_remove(&route_iterator, NULL); 
+		}  else if (route_covers_route(existing_route, route)) {
+			/* There is already a route that covers the new one. */
+			return false; 
 		}
 	}	
 
