@@ -2,7 +2,7 @@
 #
 # 2017-02-10/Stephen Houser
 #
-TARGET = ipv4-subnet
+TARGET = ipv4route
 HEADERS = 
 SOURCES = $(TARGET).c
 
