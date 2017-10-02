@@ -6,26 +6,27 @@ TARGET = nln
 HEADERS = 
 SOURCES = $(TARGET).cpp
 
+# Include all .c files in current directory
+#OBJECTS = $(patsubst %.cpp, %.o, $(wildcard *.cpp)) \
+# 		   $(patsubst %.c, %.o, $(wildcard *.c))
+#HEADERS = $(wildcard *.h)
+# Include only .c files from $(SOURCES)
+C_SOURCES = $(filter %.c,$(SOURCES))
+CXX_SOURCES = $(filter %.cpp,$(SOURCES))
+OBJECTS = $(C_SOURCES:.c=.o) $(CXX_SOURCES:.cpp=.o)
+
 CC = gcc
 CFLAGS = -g -Wall 
-LFLAGS = $(LIBS)
+LFLAGS = 
 
 CXX = g++
 CXXFLAGS = -std=c++1z -g -Wall
-LXXFLAGS = -lstdc++
-
-EXPECT = expect
+LXXFLAGS = 
 
 .PHONY: default all clean distclean
 
 default: $(TARGET)
 all: default
-
-# Include all .c files in current directory
-#OBJECTS = $(patsubst %.c, %.o, $(wildcard *.c))
-#HEADERS = $(wildcard *.h)
-# Include only .c files from $(SOURCES)
-OBJECTS= $(patsubst %.cpp, %.o, $(SOURCES)) 
 
 %.o: %.c $(HEADERS)
 	$(CC) $(CFLAGS) -c $< -o $@ 
