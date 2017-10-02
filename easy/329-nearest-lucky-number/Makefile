@@ -6,21 +6,29 @@ TARGET = nln
 HEADERS = 
 SOURCES = $(TARGET).cpp
 
-# Include all .c files in current directory
-#OBJECTS = $(patsubst %.cpp, %.o, $(wildcard *.cpp)) \
-# 		   $(patsubst %.c, %.o, $(wildcard *.c))
-#HEADERS = $(wildcard *.h)
+ifdef $(SOURCES)
 # Include only .c files from $(SOURCES)
 C_SOURCES = $(filter %.c,$(SOURCES))
 CXX_SOURCES = $(filter %.cpp,$(SOURCES))
 OBJECTS = $(C_SOURCES:.c=.o) $(CXX_SOURCES:.cpp=.o)
+else
+# Include all .c files in current directory
+HEADERS = $(wildcard *.h)
+OBJECTS = $(patsubst %.cpp, %.o, $(wildcard *.cpp)) \
+			$(patsubst %.c, %.o, $(wildcard *.c))
+endif
 
+# C Preprocessor flags
+CPPFLAGS = -g -Wall 
+
+# C specific flags
 CC = gcc
-CFLAGS = -g -Wall 
+CFLAGS = 
 LFLAGS = 
 
+# C++ specific flags
 CXX = g++
-CXXFLAGS = -std=c++1z -g -Wall
+CXXFLAGS = -std=c++1z
 LXXFLAGS = 
 
 .PHONY: default all clean distclean
@@ -28,11 +36,11 @@ LXXFLAGS =
 default: $(TARGET)
 all: default
 
-%.o: %.c $(HEADERS)
-	$(CC) $(CFLAGS) -c $< -o $@ 
+#%.o: %.c $(HEADERS)
+#	$(CC) -c $(CPPFLAGS) $(CFLAGS) $< -o $@ 
 
-%.o: %.cpp $(HEADERS)
-	$(CXX) $(CXXFLAGS) -c $< -o $@ 
+#%.o: %.cpp $(HEADERS)
+#	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@ 
 
 # https://www.gnu.org/software/make/manual/html_node/Special-Targets.html
 # if make is killed or interrupted during the execution of their 
