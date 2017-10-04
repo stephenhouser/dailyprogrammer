@@ -105,7 +105,7 @@ Example Output
 2997    18  19   
 9949    9   10   
 1938    14  17  the Lord when I lay my vengeance upon 
-1938    15  17  thee." 
+1938    15  17  thee."
 1938    9   17  keeper and the finder of lost children. 
 1938    13  17  brothers. And you will know my name is 
 9949    2   10  but not the one it needs right now. 

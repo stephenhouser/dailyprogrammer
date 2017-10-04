@@ -56,10 +56,10 @@ $(TARGET): $(OBJECTS)
 	$(CXX) $(LXXFLAGS) $^ $(LIBS) -o $@
 
 test: $(TARGET)
-	@./$(TARGET) 103
-	@./$(TARGET) 225
-	@./$(TARGET) 997
-	@./$(TARGET) -1
+	./$(TARGET) < example.input | tee example.o
+	@echo ""
+	@echo "Difference from expected output:"
+	@diff example.o example.output
 
 clean:
 	-rm -f *.o

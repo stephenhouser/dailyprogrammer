@@ -52,6 +52,8 @@ class Packet {
 		int num_packets;
 		std::string message_text;
 
+		// Packet() { std::cout << "P() "; }
+
 		friend std::istream& operator>>(std::istream& is, Packet& p);
 		friend std::ostream& operator<<(std::ostream& os, const Packet& dt);  
 };
@@ -64,7 +66,7 @@ std::istream& operator>>(std::istream& is, Packet& p) {
 	p.message_text = trim(message_text);
 	// std::cout << "[" << p.message_text << "]" << std::endl;
 	return is;
-	}
+}
 
 std::ostream& operator<<(std::ostream& os, const Packet& p) {
 	os << std::setw(4) << p.message_id  <<
@@ -82,12 +84,27 @@ class Message {
 		int num_packets;
 		std::map<int, Packet> packets;
 
-		Message() {}
+		//Message() { std::cout << "!!"; }
 		Message(int message_id, int num_packets) {
 			this->message_id =message_id;
 			this->num_packets = num_packets;
+			// std::cout << "M(" << message_id << ") ";
 	   }
+
+	   bool is_complete() {
+		   return this->num_packets == this->packets.size();
+	   }
+
+	   friend std::ostream& operator<<(std::ostream& os, const Message& m);
 };
+
+std::ostream& operator<<(std::ostream& os, const Message& m) {
+	for (const auto &[packet_id, pkt] : m.packets) {
+		std::cout << pkt << std::endl;
+	}
+
+	return os;
+}
 
 int main(int argc, char *argv[]){
 	int option_char;	// getopt returned option character
@@ -110,35 +127,24 @@ int main(int argc, char *argv[]){
 
 	std::map<int, Message> messages;
 
-	Packet p;
+	Packet p;	// creates a packet object
 	while (std::cin >> p) {
-		Message *m;
-		if (messages.count(p.message_id) == 1) {
-			m = &messages[p.message_id];
-		} else {
-			// m = new Message(p.message_id, p.num_packets);
-			m = new Message();
-			m->message_id = p.message_id;
-			m->num_packets = p.num_packets;
-		}
+		auto [it, success] = messages.try_emplace(p.message_id, 
+			                                      p.message_id, p.num_packets);
+		auto &[message_id, m] = *it;
 
-		m->packets[p.packet_id] = p;	// copy?
-		messages[p.message_id] = *m;	// take ownership
+		m.packets[p.packet_id] = p;	// copies P and gives to m.packets
 
-		if (m->num_packets == m->packets.size()) {
-			for (const auto &[packet_id, pkt] : m->packets) {
-				std::cout << pkt << std::endl;
-			}
-			messages.erase(p.message_id);
+		if (m.is_complete()) {
+			std::cout << m;
+			messages.erase(message_id);
 		}
 	}
 
 	if (messages.size() != 0) {
 		std::cout << std::endl << "Incomplete packets:" << std::endl;
 		for (const auto &[message_id, msg] : messages) {
-			for (const auto &[packet_id, pkt] : msg.packets) {
-				std::cout << pkt << std::endl;
-			}
+			std::cout << msg;
 		}
 	}
 }
